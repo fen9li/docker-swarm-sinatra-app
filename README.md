@@ -252,13 +252,25 @@ ID                  NAME                   IMAGE                              NO
 
 ```  
 
-### Test by Using curl or web browser 
+### Test  
+
+> Test from docker101
 
 ```sh
 [fli@docker101 ~]$ curl http://docker101.fen9.li
 Hello World![fli@docker101 ~]$
 [fli@docker101 ~]$ curl http://docker102.fen9.li
 Hello World![fli@docker101 ~]$
+```
+
+> Test from docker102
+
+```sh
+[fli@docker102 ~]$ curl http://docker101.fen9.li
+Hello World![fli@docker102 ~]$
+[fli@docker102 ~]$ curl http://docker102.fen9.li
+Hello World![fli@docker102 ~]$
+[fli@docker102 ~]$
 
 ```
 
@@ -293,6 +305,7 @@ y8kn8g814re6        simple-sinatra-app.3   fen9li/simple-sinatra-app:latest   do
 
 ### Test again
 
+> From docker101, docker102 & docker103
 ```sh
 [fli@docker101 ~]$ curl http://docker101.fen9.li
 Hello World![fli@docker101 ~]$
@@ -301,5 +314,25 @@ Hello World![fli@docker101 ~]$
 [fli@docker101 ~]$ curl http://docker103.fen9.li
 Hello World![fli@docker101 ~]$
 [fli@docker101 ~]$
+
+... ...
+
+[fli@docker102 ~]$ curl http://docker101.fen9.li
+Hello World![fli@docker102 ~]$
+[fli@docker102 ~]$ curl http://docker102.fen9.li
+Hello World![fli@docker102 ~]$
+[fli@docker102 ~]$ curl http://docker103.fen9.li
+Hello World![fli@docker102 ~]$
+[fli@docker102 ~]$
+
+... ...
+
+[fli@docker103 ~]$ curl http://docker101.fen9.li
+Hello World![fli@docker103 ~]$
+[fli@docker103 ~]$ curl http://docker102.fen9.li
+Hello World![fli@docker103 ~]$
+[fli@docker103 ~]$ curl http://docker103.fen9.li
+Hello World![fli@docker103 ~]$
+[fli@docker103 ~]$
 
 ```
