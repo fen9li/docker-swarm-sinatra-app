@@ -78,13 +78,92 @@ Oct 14 22:16:49 docker101.fen9.li systemd[1]: Started Docker Application Con....
 Hint: Some lines were ellipsized, use -l to show in full.
 [root@docker101 ~]#
 
-[root@docker101 ~]# docker --version
+[fli@docker101 ~]$ docker --version
 Docker version 17.09.0-ce, build afdb6d4
-[root@docker101 ~]#
+[fli@docker101 ~]$
 ```
 
 ### Add user to docker group
-
+Add user name to docker group, logout, login ...
 ```sh
-usermod -aG docker fli
+[root@docker101 ~]# usermod -aG docker fli
+... ...
+
+Using username "fli".
+fli@192.168.200.101's password:
+Last login: Sat Oct 14 22:11:59 2017 from 192.168.200.1
+[fli@docker101 ~]$ id
+uid=1000(fli) gid=1000(fli) groups=1000(fli),995(docker) context=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
+[fli@docker101 ~]$
 ```
+
+## Create simple-sinatra-app docker image 
+
+Base image: [ruby:2.4-onbuild](https://hub.docker.com/_/ruby/) 
+
+### Prepare 
+```sh
+[fli@docker101 ~]$ mkdir test
+[fli@docker101 ~]$ cd test/
+[fli@docker101 test]$ git clone https://github.com/fen9li/docker-swarm-sinatra-app.git
+[fli@docker101 test]$ cd docker-swarm-sinatra-app/
+[fli@docker101 docker-swarm-sinatra-app]$
+[fli@docker101 docker-swarm-sinatra-app]$ git clone -b develop https://github.com/fen9li/simple-sinatra-app.git
+Cloning into 'simple-sinatra-app'...
+remote: Counting objects: 8, done.
+remote: Compressing objects: 100% (6/6), done.
+remote: Total 8 (delta 1), reused 8 (delta 1), pack-reused 0
+Unpacking objects: 100% (8/8), done.
+[fli@docker101 docker-swarm-sinatra-app]$
+
+[fli@docker101 docker-swarm-sinatra-app]$ \cp Dockerfile simple-sinatra-app/
+[fli@docker101 docker-swarm-sinatra-app]$ cd simple-sinatra-app/
+[fli@docker101 simple-sinatra-app]$ tree
+.
+├── config.ru
+├── Dockerfile
+├── Gemfile
+└── helloworld.rb
+
+0 directories, 4 files
+[fli@docker101 simple-sinatra-app]$
+```
+
+### Generate Gemfile.lock, build simple-sinatra-app image and push to docker hub
+```sh
+[fli@docker101 simple-sinatra-app]$ docker run --rm -v "$PWD":/usr/src/app -w /usr/src/app ruby:2.4 bundle install
+... ...
+[fli@docker101 simple-sinatra-app]$ 
+
+[fli@docker101 simple-sinatra-app]$ tree
+.
+├── config.ru
+├── Dockerfile
+├── Gemfile
+├── Gemfile.lock
+└── helloworld.rb
+
+0 directories, 5 files
+[fli@docker101 simple-sinatra-app]$
+
+[fli@docker101 simple-sinatra-app]$ docker build -t fen9li/simple-sinatra-app .
+... ...
+[fli@docker101 simple-sinatra-app]$ 
+[fli@docker101 simple-sinatra-app]$ docker images
+REPOSITORY                  TAG                 IMAGE ID            CREATED             SIZE
+fen9li/simple-sinatra-app   latest              fbd175a49e26        8 seconds ago       702MB
+ruby                        2.4-onbuild         4e688c69ff1b        3 days ago          684MB
+ruby                        2.4                 eebb1381c2aa        3 days ago          684MB
+[fli@docker101 simple-sinatra-app]$
+
+[fli@docker101 simple-sinatra-app]$ docker login
+Login with your Docker ID to push and pull images from Docker Hub. If you don't have a Docker ID, head over to https://hub.docker.com to create one.
+Username: fen9li
+Password:
+Login Succeeded
+[fli@docker101 simple-sinatra-app]$ docker push fen9li/simple-sinatra-app
+The push refers to a repository [docker.io/fen9li/simple-sinatra-app]
+... ...
+[fli@docker101 simple-sinatra-app]$ 
+```
+
