@@ -167,3 +167,139 @@ The push refers to a repository [docker.io/fen9li/simple-sinatra-app]
 [fli@docker101 simple-sinatra-app]$ 
 ```
 
+## Setup Swarm
+
+### Initial Swarm on docker101 
+```sh
+[fli@docker101 ~]$ docker swarm init --advertise-addr $(hostname -i)
+Swarm initialized: current node (yclttfs3fqiggcef2y5es6pik) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-2xx9qgtocre0zp5gddtmea9gi7zbcnoizk6a5kh0gdegr2hmaq-a2beod2aozb0vw2bxqp949ym9 192.168.200.101:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+[fli@docker101 ~]$ docker node ls
+ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS
+yclttfs3fqiggcef2y5es6pik *   docker101.fen9.li   Ready               Active              Leader
+[fli@docker101 ~]$
+```
+
+### Join docker102 & docker103 to Swarm
+
+```sh
+[fli@docker102 ~]$ docker swarm join --token SWMTKN-1-2xx9qgtocre0zp5gddtmea9gi7zbcnoizk6a5kh0gdegr2hmaq-a2beod2aozb0vw2bxqp949ym9 192.168.200.101:2377
+This node joined a swarm as a worker.
+[fli@docker102 ~]$
+
+... ...
+
+[fli@docker103 ~]$ docker swarm join --token SWMTKN-1-2xx9qgtocre0zp5gddtmea9gi7zbcnoizk6a5kh0gdegr2hmaq-a2beod2aozb0vw2bxqp949ym9 192.168.200.101:2377
+This node joined a swarm as a worker.
+[fli@docker103 ~]$
+
+```
+
+### Double check on docker101
+```sh
+[fli@docker101 ~]$ docker node ls
+ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS
+yclttfs3fqiggcef2y5es6pik *   docker101.fen9.li   Ready               Active              Leader
+59p1wfpfkimlmtczqioprlz8n     docker102.fen9.li   Ready               Active
+okvzrtn4educaqj0186pj4pwm     docker103.fen9.li   Ready               Active
+[fli@docker101 ~]$
+
+```
+
+## Deploy simple-sinatra-app service to Swarm
+
+### Deploy as per below specification
+
+> Service name: simple-sinatra-app
+
+> Expose binding port: 80
+
+> Replicas: 2
+
+> Detach: true
+
+> Image: fen9li/simple-sinatra-app
+
+```sh
+[fli@docker101 ~]$ docker service create --name simple-sinatra-app --publish 80:4567 --replicas 2 --detach=true fen9li/simple-sinatra-app
+z0gbpcq3fedpifjebzcddoodp
+[fli@docker101 ~]$
+
+[fli@docker101 ~]$ docker service ls
+ID                  NAME                 MODE                REPLICAS            IMAGE                              PORTS
+z0gbpcq3fedp        simple-sinatra-app   replicated          1/2                 fen9li/simple-sinatra-app:latest   *:80->4567/tcp
+[fli@docker101 ~]$ docker service ps simple-sinatra-app
+ID                  NAME                   IMAGE                              NODE                DESIRED STATE       CURRENT STATE             ERROR               PORTS
+9tw7qwpqfoko        simple-sinatra-app.1   fen9li/simple-sinatra-app:latest   docker102.fen9.li   Running             Preparing 2 minutes ago
+88ordjfio2y1        simple-sinatra-app.2   fen9li/simple-sinatra-app:latest   docker101.fen9.li   Running             Running 2 minutes ago
+[fli@docker101 ~]$
+```
+
+> Note: service instance on docker102's CURRENT STATE is 'Preparing ...'. It needs time to download image from docker hub. Keep watching its status until its CURRENT STATE is 'Running ...'.
+
+```sh
+[fli@docker101 ~]$ docker service ps simple-sinatra-app
+ID                  NAME                   IMAGE                              NODE                DESIRED STATE       CURRENT STATE           ERROR               PORTS
+9tw7qwpqfoko        simple-sinatra-app.1   fen9li/simple-sinatra-app:latest   docker102.fen9.li   Running             Running 3 minutes ago
+88ordjfio2y1        simple-sinatra-app.2   fen9li/simple-sinatra-app:latest   docker101.fen9.li   Running             Running 8 minutes ago
+[fli@docker101 ~]$
+
+```  
+
+### Test by Using curl or web browser 
+
+```sh
+[fli@docker101 ~]$ curl http://docker101.fen9.li
+Hello World![fli@docker101 ~]$
+[fli@docker101 ~]$ curl http://docker102.fen9.li
+Hello World![fli@docker101 ~]$
+
+```
+
+### Scale up to 3 instances
+
+> Same as what happened to docker102, it takes time to download image from docker hub. Keep watching till its CURRENT STATE is 'Running ...'
+
+```sh
+[fli@docker101 ~]$ docker service scale simple-sinatra-app=3
+simple-sinatra-app scaled to 3
+Since --detach=false was not specified, tasks will be scaled in the background.
+In a future release, --detach=false will become the default.
+[fli@docker101 ~]$ docker service ps simple-sinatra-app
+ID                  NAME                   IMAGE                              NODE                DESIRED STATE       CURRENT STATE                  ERROR               PORTS
+9tw7qwpqfoko        simple-sinatra-app.1   fen9li/simple-sinatra-app:latest   docker102.fen9.li   Running             Running 9 minutes ago
+88ordjfio2y1        simple-sinatra-app.2   fen9li/simple-sinatra-app:latest   docker101.fen9.li   Running             Running 15 minutes ago
+y8kn8g814re6        simple-sinatra-app.3   fen9li/simple-sinatra-app:latest   docker103.fen9.li   Running             Preparing about a minute ago
+[fli@docker101 ~]$
+
+```
+
+> Service are scaled up to 3 instances successfully.
+
+```sh
+[fli@docker101 ~]$ docker service ps simple-sinatra-app
+ID                  NAME                   IMAGE                              NODE                DESIRED STATE       CURRENT STATE                ERROR               PORTS
+9tw7qwpqfoko        simple-sinatra-app.1   fen9li/simple-sinatra-app:latest   docker102.fen9.li   Running             Running 16 minutes ago
+88ordjfio2y1        simple-sinatra-app.2   fen9li/simple-sinatra-app:latest   docker101.fen9.li   Running             Running 22 minutes ago
+y8kn8g814re6        simple-sinatra-app.3   fen9li/simple-sinatra-app:latest   docker103.fen9.li   Running             Running about a minute ago
+[fli@docker101 ~]$
+```
+
+### Test again
+
+```sh
+[fli@docker101 ~]$ curl http://docker101.fen9.li
+Hello World![fli@docker101 ~]$
+[fli@docker101 ~]$ curl http://docker102.fen9.li
+Hello World![fli@docker101 ~]$
+[fli@docker101 ~]$ curl http://docker103.fen9.li
+Hello World![fli@docker101 ~]$
+[fli@docker101 ~]$
+
+```
