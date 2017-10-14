@@ -336,3 +336,16 @@ Hello World![fli@docker103 ~]$
 [fli@docker103 ~]$
 
 ```
+
+### Remove simple-sinatra-app service
+
+```sh
+[fli@docker101 ~]$ docker service rm simple-sinatra-app
+simple-sinatra-app
+[fli@docker101 ~]$ docker service ls
+ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+[fli@docker101 ~]$ docker service ps simple-sinatra-app
+no such service: simple-sinatra-app
+[fli@docker101 ~]$
+
+```
