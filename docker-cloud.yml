@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  web:
+    image: fen9li/simple-sinatra-app
+    ports:
+      - "80:4567"
+    target_num_containers: 3
+    deploy:
+      - replicas: 3
+    restart: always
+    autoredeploy: true
+    deployment_strategy: high_availability
+    tags:
+      - web
+      - fli
