@@ -290,7 +290,7 @@ Hello World![fli@docker103 ~]$
 [fli@docker103 ~]$
 ```
 
-### Remove helloworld Stack
+## Remove helloworld Stack
 
 ```sh
 [fli@docker101 docker-swarm-sinatra-app]$ docker stack rm helloworld
