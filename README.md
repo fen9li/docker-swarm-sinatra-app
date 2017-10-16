@@ -214,43 +214,43 @@ okvzrtn4educaqj0186pj4pwm     docker103.fen9.li   Ready               Active
 
 ## Deploy simple-sinatra-app service to Swarm
 
-### Deploy as per below specification
-
-> Service name: simple-sinatra-app
-
-> Expose binding port: 80
-
-> Replicas: 2
-
-> Detach: true
-
-> Image: fen9li/simple-sinatra-app
+### Deploy helloworld stack
 
 ```sh
-[fli@docker101 ~]$ docker service create --name simple-sinatra-app --publish 80:4567 --replicas 2 --detach=true fen9li/simple-sinatra-app
-z0gbpcq3fedpifjebzcddoodp
-[fli@docker101 ~]$
+[fli@docker101 docker-swarm-sinatra-app]$ pwd
+/home/fli/test/docker-swarm-sinatra-app
+[fli@docker101 docker-swarm-sinatra-app]$
 
-[fli@docker101 ~]$ docker service ls
-ID                  NAME                 MODE                REPLICAS            IMAGE                              PORTS
-z0gbpcq3fedp        simple-sinatra-app   replicated          1/2                 fen9li/simple-sinatra-app:latest   *:80->4567/tcp
-[fli@docker101 ~]$ docker service ps simple-sinatra-app
-ID                  NAME                   IMAGE                              NODE                DESIRED STATE       CURRENT STATE             ERROR               PORTS
-9tw7qwpqfoko        simple-sinatra-app.1   fen9li/simple-sinatra-app:latest   docker102.fen9.li   Running             Preparing 2 minutes ago
-88ordjfio2y1        simple-sinatra-app.2   fen9li/simple-sinatra-app:latest   docker101.fen9.li   Running             Running 2 minutes ago
-[fli@docker101 ~]$
+[fli@docker101 docker-swarm-sinatra-app]$ tree
+.
+├── docker-cloud.yml
+├── Dockerfile
+├── LICENSE
+├── README.md
+└── simple-sinatra-app
+    ├── config.ru
+    ├── Dockerfile
+    ├── Gemfile
+    ├── Gemfile.lock
+    └── helloworld.rb
+
+1 directory, 9 files
+[fli@docker101 docker-swarm-sinatra-app]$
+
+[fli@docker101 docker-swarm-sinatra-app]$ docker stack deploy --compose-file docker-cloud.yml helloworld
+Creating network helloworld_default
+Creating service helloworld_web
+[fli@docker101 docker-swarm-sinatra-app]$
+
+[fli@docker101 docker-swarm-sinatra-app]$ docker stack ls
+NAME                SERVICES
+helloworld          1
+[fli@docker101 docker-swarm-sinatra-app]$ docker stack ps helloworld
+ID                  NAME                IMAGE                              NODE                DESIRED STATE       CURRENT STATE            ERROR               PORTS
+m8hqphw6lpth        helloworld_web.1    fen9li/simple-sinatra-app:latest   docker103.fen9.li   Running             Running 13 seconds ago
+7abku4lx47l1        helloworld_web.2    fen9li/simple-sinatra-app:latest   docker101.fen9.li   Running             Running 13 seconds ago
+[fli@docker101 docker-swarm-sinatra-app]$
 ```
-
-> Note: service instance on docker102's CURRENT STATE is 'Preparing ...'. It needs time to download image from docker hub. Keep watching its status until its CURRENT STATE is 'Running ...'.
-
-```sh
-[fli@docker101 ~]$ docker service ps simple-sinatra-app
-ID                  NAME                   IMAGE                              NODE                DESIRED STATE       CURRENT STATE           ERROR               PORTS
-9tw7qwpqfoko        simple-sinatra-app.1   fen9li/simple-sinatra-app:latest   docker102.fen9.li   Running             Running 3 minutes ago
-88ordjfio2y1        simple-sinatra-app.2   fen9li/simple-sinatra-app:latest   docker101.fen9.li   Running             Running 8 minutes ago
-[fli@docker101 ~]$
-
-```  
 
 ### Test  
 
@@ -261,6 +261,9 @@ ID                  NAME                   IMAGE                              NO
 Hello World![fli@docker101 ~]$
 [fli@docker101 ~]$ curl http://docker102.fen9.li
 Hello World![fli@docker101 ~]$
+[fli@docker101 ~]$ curl http://docker103.fen9.li
+Hello World![fli@docker101 ~]$
+[fli@docker101 ~]$
 ```
 
 > Test from docker102
@@ -270,63 +273,14 @@ Hello World![fli@docker101 ~]$
 Hello World![fli@docker102 ~]$
 [fli@docker102 ~]$ curl http://docker102.fen9.li
 Hello World![fli@docker102 ~]$
-[fli@docker102 ~]$
-
-```
-
-### Scale up to 3 instances
-
-> Same as what happened to docker102, it takes time to download image from docker hub. Keep watching till its CURRENT STATE is 'Running ...'
-
-```sh
-[fli@docker101 ~]$ docker service scale simple-sinatra-app=3
-simple-sinatra-app scaled to 3
-Since --detach=false was not specified, tasks will be scaled in the background.
-In a future release, --detach=false will become the default.
-[fli@docker101 ~]$ docker service ps simple-sinatra-app
-ID                  NAME                   IMAGE                              NODE                DESIRED STATE       CURRENT STATE                  ERROR               PORTS
-9tw7qwpqfoko        simple-sinatra-app.1   fen9li/simple-sinatra-app:latest   docker102.fen9.li   Running             Running 9 minutes ago
-88ordjfio2y1        simple-sinatra-app.2   fen9li/simple-sinatra-app:latest   docker101.fen9.li   Running             Running 15 minutes ago
-y8kn8g814re6        simple-sinatra-app.3   fen9li/simple-sinatra-app:latest   docker103.fen9.li   Running             Preparing about a minute ago
-[fli@docker101 ~]$
-
-```
-
-> Service are scaled up to 3 instances successfully.
-
-```sh
-[fli@docker101 ~]$ docker service ps simple-sinatra-app
-ID                  NAME                   IMAGE                              NODE                DESIRED STATE       CURRENT STATE                ERROR               PORTS
-9tw7qwpqfoko        simple-sinatra-app.1   fen9li/simple-sinatra-app:latest   docker102.fen9.li   Running             Running 16 minutes ago
-88ordjfio2y1        simple-sinatra-app.2   fen9li/simple-sinatra-app:latest   docker101.fen9.li   Running             Running 22 minutes ago
-y8kn8g814re6        simple-sinatra-app.3   fen9li/simple-sinatra-app:latest   docker103.fen9.li   Running             Running about a minute ago
-[fli@docker101 ~]$
-```
-
-### Test again
-
-> From docker101, docker102 & docker103
-```sh
-[fli@docker101 ~]$ curl http://docker101.fen9.li
-Hello World![fli@docker101 ~]$
-[fli@docker101 ~]$ curl http://docker102.fen9.li
-Hello World![fli@docker101 ~]$
-[fli@docker101 ~]$ curl http://docker103.fen9.li
-Hello World![fli@docker101 ~]$
-[fli@docker101 ~]$
-
-... ...
-
-[fli@docker102 ~]$ curl http://docker101.fen9.li
-Hello World![fli@docker102 ~]$
-[fli@docker102 ~]$ curl http://docker102.fen9.li
-Hello World![fli@docker102 ~]$
 [fli@docker102 ~]$ curl http://docker103.fen9.li
 Hello World![fli@docker102 ~]$
 [fli@docker102 ~]$
+```
 
-... ...
+> Test from docker103
 
+```sh
 [fli@docker103 ~]$ curl http://docker101.fen9.li
 Hello World![fli@docker103 ~]$
 [fli@docker103 ~]$ curl http://docker102.fen9.li
@@ -334,18 +288,15 @@ Hello World![fli@docker103 ~]$
 [fli@docker103 ~]$ curl http://docker103.fen9.li
 Hello World![fli@docker103 ~]$
 [fli@docker103 ~]$
-
 ```
 
-### Remove simple-sinatra-app service
+### Remove helloworld Stack
 
 ```sh
-[fli@docker101 ~]$ docker service rm simple-sinatra-app
-simple-sinatra-app
-[fli@docker101 ~]$ docker service ls
-ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
-[fli@docker101 ~]$ docker service ps simple-sinatra-app
-no such service: simple-sinatra-app
-[fli@docker101 ~]$
-
+[fli@docker101 docker-swarm-sinatra-app]$ docker stack rm helloworld
+Removing service helloworld_web
+Removing network helloworld_default
+[fli@docker101 docker-swarm-sinatra-app]$ docker stack ls
+NAME                SERVICES
+[fli@docker101 docker-swarm-sinatra-app]$
 ```
